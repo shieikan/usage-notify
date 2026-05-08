@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$(git rev-parse --show-toplevel)"
+cd "$repo_root"
+
+if [[ -x ".venv/bin/usage-notify" ]]; then
+  exec .venv/bin/usage-notify hook-stop
+fi
+
+exec uv run --quiet usage-notify hook-stop
+

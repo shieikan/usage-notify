@@ -1,0 +1,18 @@
+[project]
+name = "usage-notify"
+version = "0.1.0"
+description = "Collect Codex token usage and send usage events to an external service."
+requires-python = ">=3.11"
+dependencies = [
+    "python-dotenv>=1.0.1",
+]
+
+[dependency-groups]
+dev = []
+
+[project.scripts]
+usage-notify = "usage_notify.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"

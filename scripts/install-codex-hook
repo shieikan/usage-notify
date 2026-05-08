@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$(git rev-parse --show-toplevel)"
+codex_home="${CODEX_HOME:-$HOME/.codex}"
+config_file="$codex_home/config.toml"
+hooks_file="$codex_home/hooks.json"
+bin_dir="$HOME/.local/bin"
+hook_command="$bin_dir/usage-notify-codex-hook-stop"
+
+mkdir -p "$codex_home"
+mkdir -p "$bin_dir"
+
+uv_path="$(command -v uv)"
+
+cat > "$hook_command" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$repo_root"
+cd "\$repo_root"
+
+if [[ -x "\$repo_root/.venv/bin/usage-notify" ]]; then
+  exec "\$repo_root/.venv/bin/usage-notify" \\
+    --env-file "\$repo_root/.env" \\
+    hook-stop \\
+    "\$@"
+fi
+
+exec "$uv_path" run --quiet \\
+  --project "\$repo_root" \\
+  --directory "\$repo_root" \\
+  usage-notify \\
+  --env-file "\$repo_root/.env" \\
+  hook-stop \\
+  "\$@"
+EOF
+chmod +x "$hook_command"
+
+if [[ ! -f "$config_file" ]]; then
+  cat > "$config_file" <<'EOF'
+[features]
+codex_hooks = true
+EOF
+elif grep -q '^\[features\]' "$config_file"; then
+  if grep -q '^codex_hooks[[:space:]]*=' "$config_file"; then
+    sed -i 's/^codex_hooks[[:space:]]*=.*/codex_hooks = true/' "$config_file"
+  else
+    awk '
+      BEGIN { inserted = 0; in_features = 0 }
+      /^\[features\]/ { print; print "codex_hooks = true"; inserted = 1; in_features = 1; next }
+      /^\[/ && in_features { in_features = 0 }
+      { print }
+      END {
+        if (!inserted) {
+          print ""
+          print "[features]"
+          print "codex_hooks = true"
+        }
+      }
+    ' "$config_file" > "$config_file.tmp"
+    mv "$config_file.tmp" "$config_file"
+  fi
+else
+  cat >> "$config_file" <<'EOF'
+
+[features]
+codex_hooks = true
+EOF
+fi
+
+cat > "$hooks_file" <<EOF
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$hook_command",
+            "timeout": 20,
+            "statusMessage": "Sending Codex usage"
+          }
+        ]
+      }
+    ]
+  }
+}
+EOF
+
+chmod +x "$repo_root/scripts/codex-usage-hook-stop"
+
+printf 'Installed Codex user hook:\n'
+printf '  config: %s\n' "$config_file"
+printf '  hooks:  %s\n' "$hooks_file"
+printf '  command: %s\n' "$hook_command"
+printf '\nRestart Codex sessions for the hook to take effect.\n'

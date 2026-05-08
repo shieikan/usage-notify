@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$(git rev-parse --show-toplevel)"
+codex_home="${CODEX_HOME:-$HOME/.codex}"
+hooks_file="$codex_home/hooks.json"
+hook_command="$HOME/.local/bin/usage-notify-codex-hook-stop"
+repo_hook_command="$repo_root/scripts/codex-usage-hook-stop"
+
+if [[ ! -f "$hooks_file" ]]; then
+  printf 'No Codex hooks file found: %s\n' "$hooks_file"
+else
+  python3 - "$hooks_file" "$hook_command" "$repo_hook_command" <<'PY'
+import json
+import shutil
+import sys
+from datetime import datetime
+from pathlib import Path
+
+hooks_path = Path(sys.argv[1])
+targets = set(sys.argv[2:])
+
+with hooks_path.open("r", encoding="utf-8") as file:
+    data = json.load(file)
+
+before = json.dumps(data, sort_keys=True)
+hooks = data.get("hooks", {})
+stop_entries = hooks.get("Stop", [])
+new_stop_entries = []
+removed = 0
+
+for entry in stop_entries:
+    commands = entry.get("hooks", [])
+    kept_commands = []
+    for command in commands:
+        if command.get("type") == "command" and command.get("command") in targets:
+            removed += 1
+            continue
+        kept_commands.append(command)
+    if kept_commands:
+        updated = dict(entry)
+        updated["hooks"] = kept_commands
+        new_stop_entries.append(updated)
+
+if new_stop_entries:
+    hooks["Stop"] = new_stop_entries
+elif "Stop" in hooks:
+    del hooks["Stop"]
+
+if hooks:
+    data["hooks"] = hooks
+elif "hooks" in data:
+    del data["hooks"]
+
+after = json.dumps(data, sort_keys=True)
+if before != after:
+    backup = hooks_path.with_name(
+        f"{hooks_path.name}.bak.usage-notify-uninstall-{datetime.now().strftime('%Y%m%d%H%M%S')}"
+    )
+    shutil.copy2(hooks_path, backup)
+    with hooks_path.open("w", encoding="utf-8") as file:
+        json.dump(data, file, indent=2)
+        file.write("\n")
+    print(f"Removed {removed} hook command(s).")
+    print(f"Backup: {backup}")
+else:
+    print("No usage-notify hook command found.")
+PY
+fi
+
+if [[ -f "$hook_command" ]] && grep -qF "$repo_root" "$hook_command"; then
+  rm "$hook_command"
+  printf 'Removed hook wrapper: %s\n' "$hook_command"
+else
+  printf 'Hook wrapper not removed because it was not found or does not belong to this repo: %s\n' "$hook_command"
+fi
+
+printf '\nLeft Codex feature flag unchanged. If no other hooks use it, you may manually remove codex_hooks from %s/config.toml.\n' "$codex_home"

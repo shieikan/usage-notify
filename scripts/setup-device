@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$(git rev-parse --show-toplevel)"
+cd "$repo_root"
+
+if ! command -v uv >/dev/null 2>&1; then
+  printf 'Error: uv is not installed or not in PATH.\n' >&2
+  printf 'Install uv first: https://docs.astral.sh/uv/getting-started/installation/\n' >&2
+  exit 1
+fi
+
+uv sync
+
+if [[ ! -f ".env" ]]; then
+  cp .env.example .env
+  printf 'Created .env from .env.example. Edit it before sending usage.\n'
+else
+  printf '.env already exists; leaving it unchanged.\n'
+fi
+
+chmod +x scripts/codex-usage-hook-stop
+scripts/install-codex-hook
+
+printf '\nNext steps:\n'
+printf '  1. Edit %s/.env for this device.\n' "$repo_root"
+printf '  2. Add this device to Cloudflare CLIENT_TOKENS.\n'
+printf '  3. Run: uv run usage-notify self-test\n'
+printf '  4. Run: uv run usage-notify flush --retry-now\n'
+

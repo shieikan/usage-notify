@@ -1,0 +1,17 @@
+{
+  "name": "usage-notify-cloudflare",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "cf:test": "node --test cloudflare/test/*.test.js",
+    "cf:deploy": "wrangler deploy",
+    "cf:dev": "wrangler dev",
+    "cf:migrate:local": "wrangler d1 migrations apply usage_notify --local",
+    "cf:migrate:remote": "wrangler d1 migrations apply usage_notify --remote"
+  },
+  "devDependencies": {
+    "wrangler": "^4.40.0"
+  }
+}
+

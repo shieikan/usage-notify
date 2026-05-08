@@ -1,0 +1,18 @@
+name = "usage-notify"
+main = "cloudflare/src/worker.js"
+compatibility_date = "2026-05-07"
+
+# Run every day at 19:00 UTC, which is 04:00 Asia/Tokyo.
+[triggers]
+crons = ["0 19 * * *"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "usage_notify"
+database_id = "replace-with-d1-database-id"
+migrations_dir = "cloudflare/migrations"
+
+[vars]
+USAGE_NOTIFY_TIMEZONE = "Asia/Tokyo"
+REPORT_DAYS_OFFSET = "0"
+MODEL_PRICES_JSON = '{"gpt-5.5":{"input":5,"output":30},"gpt-5.4-pro":{"input":30,"output":180},"gpt-5.4":{"input":2.5,"output":15},"gpt-5.4-mini":{"input":0.75,"output":4.5},"gpt-5.4-nano":{"input":0.2,"output":1.25},"gpt-5.3-codex":{"input":1.75,"output":14},"gpt-5.3-chat-latest":{"input":1.75,"output":14},"gpt-5.2":{"input":1.75,"output":14},"gpt-5.2-codex":{"input":1.75,"output":14},"gpt-5.2-chat-latest":{"input":1.75,"output":14},"gpt-5.1":{"input":1.25,"output":10},"gpt-5.1-codex":{"input":1.25,"output":10},"gpt-5.1-codex-max":{"input":1.25,"output":10},"gpt-5":{"input":1.25,"output":10},"gpt-5-codex":{"input":1.25,"output":10},"gpt-5-mini":{"input":0.25,"output":2},"gpt-5-nano":{"input":0.05,"output":0.4},"gpt-4.1":{"input":2,"output":8},"gpt-4.1-mini":{"input":0.4,"output":1.6},"gpt-4.1-nano":{"input":0.1,"output":0.4},"gpt-4o-mini":{"input":0.15,"output":0.6},"o4-mini":{"input":1.1,"output":4.4}}'
