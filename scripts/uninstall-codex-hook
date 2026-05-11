@@ -75,4 +75,4 @@ else
   printf 'Hook wrapper not removed because it was not found or does not belong to this repo: %s\n' "$hook_command"
 fi
 
-printf '\nLeft Codex feature flag unchanged. If no other hooks use it, you may manually remove codex_hooks from %s/config.toml.\n' "$codex_home"
+printf '\nLeft Codex feature flag unchanged. If no other hooks use it, you may manually remove hooks from %s/config.toml.\n' "$codex_home"

@@ -197,7 +197,7 @@ uv run usage-notify test-discord
 `scripts/install-codex-hook` configures a user-scope Codex `Stop` hook:
 
 - creates `~/.local/bin/usage-notify-codex-hook-stop`
-- enables `codex_hooks = true` in `~/.codex/config.toml`
+- enables `hooks = true` in `~/.codex/config.toml`
 - writes `~/.codex/hooks.json`
 
 The hook runs at the end of each Codex turn, waits briefly for the matching usage line in `~/.codex/log/codex-tui.log`, stores it in the local SQLite queue, and uploads it to the configured Worker.
@@ -208,7 +208,7 @@ Uninstall the hook from the current device:
 scripts/uninstall-codex-hook
 ```
 
-The uninstall script removes only this project’s hook command from `~/.codex/hooks.json` and writes a backup before editing. It leaves `codex_hooks = true` unchanged because other hooks may use it.
+The uninstall script removes only this project’s hook command from `~/.codex/hooks.json` and writes a backup before editing. It leaves `hooks = true` unchanged because other hooks may use it.
 
 ## Multi-Device Setup
 
